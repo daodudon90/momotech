@@ -5,6 +5,48 @@ export const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX
 
 export const MOCK_PRODUCTS: Product[] = [
   {
+    id: 'lenovo-e580',
+    name: 'Laptop xách tay Nhật Bản giá rẻ E580 I5-8250U RAM 8GB SSD 256GB 1366x768(LCD)',
+    price: '6.000.000₫',
+    originalPrice: '6.700.000₫',
+    description: `ThinkPad E580 gồm hai phiên bản tùy chọn màu sắc gồm đen và xám bạc, cả hai màu đều rất bắt mắt. Đặc biệt Lenovo đã sử dụng nắp nhôm cho sản phẩm thay vì các thế hệ trước đây.
+
+Với màn hình 15 inch, ThinkPad E580 có trọng lượng khoảng 2.1kg, có thể nói khá nặng so với những chiếc laptop doanh nghiệp mỏng nhẹ khác trên thị trường. Tuy nhiên nó cũng không phải là quá nặng, vẫn có thể mang theo một cách dễ dàng.
+
+Bù lại thiết kế có phần dày và nặng là ThinkPad E580 được trang bị khá đầy đủ các cổng kết nối cơ bản như cổng mạng RJ45, 1 cổng USB 2.0, 2 cổng USB 3.0, cổng HDMI, đầu đọc thẻ nhớ MicroSD, jack âm thanh 3.5 và cổng USB-C đồng thời là cổng sạc cho máy.
+
+Màn hình
+Màn hình của E580 có khả năng tái tạo 80% dải màu sRGB, tuy không quá nổi bật nhưng so với những chiếc laptop doanh nghiệm trong phân khúc giá dưới 20 triệu đồng là đã rất tốt.
+
+Âm thanh
+Theo đánh giá của chuyên trang laptopmag thì ThinkPad E580 là một trong những mẫu laptop có loa ngoài lớn nhất trên thị trường. Mặc dù chất lượng không quá xuất sắc nhưng khi sử dụng trong các buổi họp nếu không có loa ngoài thì đây sẽ là một chiếc laptop lý tưởng.
+
+Bàn phím, touchpad
+Bàn phím là một trong những yếu tố tạo nên huyền thoại ThinkPad, mặc dù không phải là một sản phẩm cao cấp nhưng E580 vẫn được trang bị bàn phím chất lượng. Hành trình phím sâu 1,78mm và cần một lực 72g để thao tác. Cảm giác đánh máy rất tốt, hạn chế sai lỗi chính tả và tốc độ đánh máy đạt được là rất tốt.
+
+Touchpad của ThinPad E580 cũng sở hữu chất lượng tốt với bề mặt khá mịn, không bị bám tay, các thao tác chính xác và nhận diện đa điểm tốt. Cũng như các sản phẩm khác trong dòng máy tính doanh nghiệp, touchpad của máy cũng có TrackPoint, hai phím chuột trái phải và nút cuộn để sử dụng kết hợp.
+
+Hiệu năng
+ThinkPad E580 được Lenovo nâng cấp lên chip Intel thế hệ 8, cụ thể là i5-8250U cho hiệu năng cao hơn đáng kể so với thế hệ trước. ThinkPad E580 đạt số điểm 10,712 trên Geekbench 4, tốt hơn mức trung bình của một chiếc laptop 9.820.`,
+    specs: [
+      'CPU: Intel Core i5-8250U (4 nhân)',
+      'RAM: 8GB',
+      'SSD: 256GB',
+      'Màn hình: 15.6 inch HD (1366x768)',
+      'VGA: Nvidia',
+      'Trọng lượng: ~2.1kg',
+      'Bảo hành: 6 tháng',
+      'Tình trạng: Used (Đã qua sử dụng)'
+    ],
+    images: [
+      'https://i.postimg.cc/43tcmZmX/anh1.webp',
+      'https://i.postimg.cc/hGxmfgft/anh4.webp'
+    ],
+    affiliateLink: 'https://shopee.vn/Laptop-Dell-Latitude-5310-I5-10310U-16GB-512GB-SSD-13.3-inch-FHD-m%E1%BB%8Fng-nh%E1%BA%B9-pin-tr%C3%A2u-m%C3%A0n-%C4%91%E1%BA%B9p-v%C4%83n-ph%C3%B2ng-gi%E1%BA%A3i-tr%C3%AD-OK-i.158294751.28981418547?extraParams=%7B%22display_model_id%22%3A253037237620%7D',
+    category: 'Business',
+    brand: 'Lenovo'
+  },
+  {
     id: 'dell-lat-5310',
     name: 'Laptop Dell Latitude 5310 I5-10310U/16GB/512GB SSD/13.3 inch FHD',
     price: '6.590.000₫',
