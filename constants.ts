@@ -122,6 +122,10 @@ export const MOCK_NEWS: NewsItem[] = [
     summary: 'Tổng hợp những mẫu laptop bền bỉ, hiệu năng cao phù hợp cho việc lập trình.',
     content: '...',
     imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1000',
+    images: [
+        'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1000',
+        'https://images.unsplash.com/photo-1531297461136-82af022f0b79?auto=format&fit=crop&q=80&w=1000'
+    ],
     date: '10/05/2024',
     author: 'Admin'
   },

@@ -15,12 +15,14 @@ export const NewsUploadModal: React.FC<NewsUploadModalProps> = ({ onClose, onImp
     summary: '',
     content: '',
     imageUrl: '',
+    images: [],
     author: 'Admin',
     date: new Date().toLocaleDateString('vi-VN')
   });
 
   const [generatedCSV, setGeneratedCSV] = useState('');
   const [copied, setCopied] = useState(false);
+  const [additionalImages, setAdditionalImages] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,7 +54,7 @@ export const NewsUploadModal: React.FC<NewsUploadModalProps> = ({ onClose, onImp
   };
 
   const generateCSV = () => {
-    // Format: Title, Summary, Content, Image, Date, Author
+    // Format: Title, Summary, Content, Image, Date, Author, Images
     const escapeCSV = (str: string | undefined) => {
       if (!str) return '';
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -61,13 +63,17 @@ export const NewsUploadModal: React.FC<NewsUploadModalProps> = ({ onClose, onImp
       return str;
     };
 
+    // Combine main image with additional images if needed, or just use additional images column
+    // Based on sheetService mapRawToNews, we have a separate 'Images' column for multiple images
+    
     const csvRow = [
       escapeCSV(news.title),
       escapeCSV(news.summary),
       escapeCSV(news.content),
       escapeCSV(news.imageUrl),
       escapeCSV(news.date),
-      escapeCSV(news.author)
+      escapeCSV(news.author),
+      escapeCSV(additionalImages) // New column for multiple images
     ].join(',');
 
     setGeneratedCSV(csvRow);
@@ -170,6 +176,17 @@ export const NewsUploadModal: React.FC<NewsUploadModalProps> = ({ onClose, onImp
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh bổ sung (phân cách bằng dấu phẩy)</label>
+            <textarea
+              value={additionalImages}
+              onChange={(e) => setAdditionalImages(e.target.value)}
+              rows={2}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="https://img1.jpg, https://img2.jpg..."
+            />
+          </div>
+
           {/* Generator Section */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
             <div className="flex justify-between items-center mb-3">
@@ -199,7 +216,7 @@ export const NewsUploadModal: React.FC<NewsUploadModalProps> = ({ onClose, onImp
               </div>
             )}
             <p className="text-xs text-gray-500 mt-2">
-              * Copy đoạn mã trên và dán vào dòng mới trong Google Sheet (Tab Tin Tức). Thứ tự cột: Title, Summary, Content, Image, Date, Author.
+              * Copy đoạn mã trên và dán vào dòng mới trong Google Sheet (Tab Tin Tức). Thứ tự cột: Title, Summary, Content, Image, Date, Author, Images.
             </p>
           </div>
         </div>

@@ -17,6 +17,7 @@ export interface NewsItem {
   summary: string;
   content: string; // HTML content or plain text
   imageUrl: string;
+  images?: string[]; // Additional images
   date: string;
   author: string;
 }

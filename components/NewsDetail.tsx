@@ -51,6 +51,24 @@ export const NewsDetail: React.FC<NewsDetailProps> = ({ news, onBack }) => {
             <div className="markdown-body">
                <ReactMarkdown>{news.content}</ReactMarkdown>
             </div>
+            
+            {/* Image Gallery */}
+            {news.images && news.images.length > 1 && (
+              <div className="mt-12">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Hình ảnh bài viết</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {news.images.map((img, idx) => (
+                    <div key={idx} className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 h-64">
+                      <img 
+                        src={img} 
+                        alt={`${news.title} - ${idx + 1}`} 
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </article>
       </div>

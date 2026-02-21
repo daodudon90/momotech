@@ -51,15 +51,22 @@ export const mapRawToProduct = (item: any, index: number): Product => ({
   originalPrice: item['OriginalPrice'] || item['originalPrice'] || item['Giá gốc'] || undefined
 });
 
-export const mapRawToNews = (item: any, index: number): NewsItem => ({
-  id: `news-${index}-${Date.now()}`,
-  title: item['Title'] || item['title'] || item['Tiêu đề'] || 'No Title',
-  summary: item['Summary'] || item['summary'] || item['Tóm tắt'] || '',
-  content: item['Content'] || item['content'] || item['Nội dung'] || '',
-  imageUrl: item['Image'] || item['image'] || item['Hình ảnh'] || '',
-  date: item['Date'] || item['date'] || item['Ngày'] || new Date().toLocaleDateString(),
-  author: item['Author'] || item['author'] || item['Tác giả'] || 'Admin'
-});
+export const mapRawToNews = (item: any, index: number): NewsItem => {
+  const imageUrl = item['Image'] || item['image'] || item['Hình ảnh'] || '';
+  const imagesStr = item['Images'] || item['images'] || item['Thêm ảnh'] || '';
+  const images = imagesStr ? imagesStr.split(',').map((url: string) => url.trim()) : (imageUrl ? [imageUrl] : []);
+
+  return {
+    id: `news-${index}-${Date.now()}`,
+    title: item['Title'] || item['title'] || item['Tiêu đề'] || 'No Title',
+    summary: item['Summary'] || item['summary'] || item['Tóm tắt'] || '',
+    content: item['Content'] || item['content'] || item['Nội dung'] || '',
+    imageUrl: imageUrl,
+    images: images,
+    date: item['Date'] || item['date'] || item['Ngày'] || new Date().toLocaleDateString(),
+    author: item['Author'] || item['author'] || item['Tác giả'] || 'Admin'
+  };
+};
 
 export const fetchProductsFromSheet = async (csvUrl: string): Promise<Product[]> => {
   try {
