@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Product } from "../types";
 
 // API Key provided by user
-const API_KEY = "gen-lang-client-0568907224";
+const API_KEY = "gen-lang-client-0268794610";
 
 let aiClient: GoogleGenAI | null = null;
 
