@@ -1,35 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 import { Product } from "../types";
 
-// Fallback key provided by user for published site
-const DEFAULT_API_KEY = "AIzaSyCSpt5PmyXcW9dZONUV2YN4N0HDoVLtnx4";
+// API Key provided by user
+const API_KEY = "AIzaSyCSpt5PmyXcW9dZONUV2YN4N0HDoVLtnx4";
 
 let aiClient: GoogleGenAI | null = null;
 
 // Initialize the client
 const initializeAI = () => {
-    let apiKey = DEFAULT_API_KEY;
-
-    // Try to get from environment variables if available
-    try {
-        // @ts-ignore
-        if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-            // @ts-ignore
-            apiKey = process.env.API_KEY;
-        } else if (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) {
-            apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        }
-    } catch (e) {
-        console.warn("Error reading environment variables, using default key");
-    }
-
-    if (!apiKey) {
-        console.warn("API Key not found. AI Chat will not work.");
-        return null;
-    }
-
     if (!aiClient) {
-        aiClient = new GoogleGenAI({ apiKey: apiKey });
+        // Initialize directly with the provided key, similar to: client = genai.Client(api_key="...")
+        aiClient = new GoogleGenAI({ apiKey: API_KEY });
     }
     return aiClient;
 };
@@ -41,8 +22,7 @@ export const getChatResponse = async (
 ): Promise<string> => {
     
     const client = initializeAI();
-    if (!client) return "Xin lỗi, hệ thống AI chưa được cấu hình (Thiếu API Key).";
-
+    
     // Create a context string about available products
     const productContext = products.map(p => 
         `- ${p.name}: ${p.price}. ${p.description}. Specs: ${p.specs.join(', ')}`
@@ -64,6 +44,7 @@ export const getChatResponse = async (
     `;
 
     try {
+        // Call generateContent similar to: client.models.generate_content(model="...", contents="...")
         const response = await client.models.generateContent({
             model: "gemini-3-flash-preview", 
             contents: [
