@@ -1,27 +1,14 @@
-import { GoogleGenAI } from "@google/genai";
 import { Product } from "../types";
 
-// API Key provided by user
-const API_KEY = "AIzaSyAvliuaSK3lVzYvfb4hWXK3gBDxjGWIE1Q";
-
-let aiClient: GoogleGenAI | null = null;
-
-// Initialize the client
-const initializeAI = () => {
-    if (!aiClient) {
-        // Initialize directly with the provided key, similar to: client = genai.Client(api_key="...")
-        aiClient = new GoogleGenAI({ apiKey: API_KEY });
-    }
-    return aiClient;
-};
+// API Key provided by user for Deepseek
+const API_KEY = "sk-1927fa0e7d1e47718db65b5e7b49113b";
+const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
 
 export const getChatResponse = async (
     userMessage: string, 
     products: Product[],
     history: {role: string, parts: {text: string}[]}[]
 ): Promise<string> => {
-    
-    const client = initializeAI();
     
     // Create a context string about available products
     const productContext = products.map(p => 
@@ -43,22 +30,41 @@ export const getChatResponse = async (
     5. Đừng bịa đặt giá cả.
     `;
 
+    // Convert Gemini history format to OpenAI/Deepseek format
+    const messages = [
+        { role: "system", content: systemInstruction },
+        ...history.map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts[0].text
+        })),
+        { role: "user", content: userMessage }
+    ];
+
     try {
-        // Call generateContent similar to: client.models.generate_content(model="...", contents="...")
-        const response = await client.models.generateContent({
-            model: "gemini-3-flash-preview", 
-            contents: [
-                ...history.map(h => ({ role: h.role, parts: h.parts })),
-                { role: 'user', parts: [{ text: userMessage }] }
-            ],
-            config: {
-                systemInstruction: systemInstruction,
-            }
+        const response = await fetch(DEEPSEEK_API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "deepseek-chat",
+                messages: messages,
+                stream: false
+            })
         });
 
-        return response.text || "Xin lỗi, tôi không thể trả lời lúc này.";
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Deepseek API Error:", errorData);
+            throw new Error(`Deepseek API Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content || "Xin lỗi, tôi không thể trả lời lúc này.";
+
     } catch (error) {
-        console.error("Gemini API Error:", error);
-        return "Hiện tại tôi đang gặp chút sự cố kỹ thuật. Vui lòng thử lại sau.";
+        console.error("Deepseek API Request Failed:", error);
+        return "Hiện tại tôi đang gặp chút sự cố kỹ thuật với Deepseek. Vui lòng thử lại sau.";
     }
 };
