@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { HeroSlider } from './components/HeroSlider';
 import { ProductCard } from './components/ProductCard';
@@ -11,11 +11,13 @@ import { ComparisonModal } from './components/ComparisonModal';
 import { MOCK_PRODUCTS, MOCK_NEWS, DEFAULT_SHEET_URL } from './constants';
 import { fetchProductsFromSheet, fetchNewsFromSheet, parseCSV, mapRawToProduct, mapRawToNews } from './services/sheetService';
 import { Product, NewsItem } from './types';
-import { Save, ArrowRight, Scale } from 'lucide-react';
+import { Save, ArrowRight, Scale, Filter } from 'lucide-react';
 
 import { ProductUploadModal } from './components/ProductUploadModal';
 import { NewsUploadModal } from './components/NewsUploadModal';
 import { NewsDetail } from './components/NewsDetail';
+import { FeaturedProductSlider } from './components/FeaturedProductSlider';
+import { ProductFilters } from './components/ProductFilters';
 
 const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
@@ -35,6 +37,17 @@ const App: React.FC = () => {
   const [isNewsUploadOpen, setIsNewsUploadOpen] = useState(false);
   const [sheetUrl, setSheetUrl] = useState(DEFAULT_SHEET_URL);
   const [newsUrl, setNewsUrl] = useState('');
+
+  // Filter State
+  const [activeFilters, setActiveFilters] = useState({
+    brands: [] as string[],
+    categories: [] as string[],
+    priceRange: [0, 100000000] as [number, number],
+  });
+
+  // Derived Data for Filters
+  const uniqueBrands = useMemo(() => Array.from(new Set(products.map(p => p.brand))), [products]);
+  const uniqueCategories = useMemo(() => Array.from(new Set(products.map(p => p.category))), [products]);
 
   // Load configuration from local storage on mount
   useEffect(() => {
@@ -159,6 +172,32 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Filter Logic
+  useEffect(() => {
+    let result = products;
+
+    if (activeFilters.brands.length > 0) {
+      result = result.filter(p => activeFilters.brands.includes(p.brand));
+    }
+
+    if (activeFilters.categories.length > 0) {
+      result = result.filter(p => activeFilters.categories.includes(p.category));
+    }
+
+    if (activeFilters.priceRange[0] > 0 || activeFilters.priceRange[1] < 100000000) {
+      result = result.filter(p => {
+        const price = parseInt(p.price.replace(/\D/g, ''));
+        return price >= activeFilters.priceRange[0] && price <= activeFilters.priceRange[1];
+      });
+    }
+
+    setFilteredProducts(result);
+  }, [activeFilters, products]);
+
+  const handleFilterChange = (newFilters: any) => {
+    setActiveFilters(newFilters);
+  };
+
   const renderContent = () => {
     if (selectedNews) {
       return (
@@ -193,33 +232,71 @@ const App: React.FC = () => {
       <>
         <HeroSlider />
         
-        {/* Featured Products Section */}
-        <section id="products" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12">
-            <div>
-               <h2 className="text-3xl font-extrabold text-gray-900">Sản Phẩm Nổi Bật</h2>
-               <p className="mt-2 text-gray-600">Những mẫu laptop mới nhất được cập nhật liên tục.</p>
+        {/* Featured Products Slider Section */}
+        <section id="featured-products" className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-8">
+              <div>
+                 <h2 className="text-3xl font-extrabold text-gray-900">Sản Phẩm Nổi Bật</h2>
+                 <p className="mt-2 text-gray-600">Những mẫu laptop mới nhất được cập nhật liên tục.</p>
+              </div>
             </div>
-            <div className="mt-4 md:mt-0">
-               <button 
-                 onClick={() => handleNavigation('products')}
-                 className="text-indigo-600 hover:text-indigo-800 font-medium flex items-center"
-               >
-                 Xem tất cả <ArrowRight className="ml-1 w-4 h-4" />
-               </button>
-            </div>
+            
+            <FeaturedProductSlider 
+              products={products.slice(0, 8)} // Show top 8 as featured
+              onProductClick={setSelectedProduct}
+              onCompare={toggleCompare}
+              isComparing={(p) => compareList.some(item => item.id === p.id)}
+            />
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {products.slice(0, 4).map((product) => (
-              <ProductCard 
-                  key={product.id} 
-                  product={product} 
-                  onClick={setSelectedProduct} 
-                  onCompare={toggleCompare}
-                  isComparing={compareList.some(p => p.id === product.id)}
-              />
-              ))}
+        </section>
+
+        {/* All Products with Filter Section */}
+        <section id="all-products" className="py-16 bg-gray-50 border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-8">
+               <h2 className="text-3xl font-extrabold text-gray-900">Tất Cả Sản Phẩm</h2>
+               <p className="mt-2 text-gray-600">Tìm kiếm sản phẩm phù hợp với nhu cầu của bạn.</p>
+            </div>
+
+            <div className="flex flex-col gap-8">
+              {/* Top Filters */}
+              <div className="w-full sticky top-20 z-30">
+                <ProductFilters 
+                  brands={uniqueBrands}
+                  categories={uniqueCategories}
+                  onFilterChange={handleFilterChange}
+                  onClear={() => setActiveFilters({ brands: [], categories: [], priceRange: [0, 100000000] })}
+                />
+              </div>
+
+              {/* Product Grid */}
+              <div className="w-full">
+                {filteredProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredProducts.map((product) => (
+                      <ProductCard 
+                        key={product.id} 
+                        product={product} 
+                        onClick={setSelectedProduct} 
+                        onCompare={toggleCompare}
+                        isComparing={compareList.some(p => p.id === product.id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <p className="text-gray-500 text-lg">Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
+                    <button 
+                      onClick={() => setActiveFilters({ brands: [], categories: [], priceRange: [0, 100000000] })}
+                      className="mt-4 text-indigo-600 font-medium hover:underline"
+                    >
+                      Xóa bộ lọc
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
