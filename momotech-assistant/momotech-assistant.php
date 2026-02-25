@@ -6,6 +6,10 @@
  * Author: Momotech
  */
 
+if (!defined('ABSPATH')) {
+    exit; // Exit if accessed directly
+}
+
 function momotech_assistant_enqueue_scripts() {
     $plugin_dir_path = plugin_dir_path(__FILE__);
     $plugin_url = plugin_dir_url(__FILE__);
@@ -16,9 +20,6 @@ function momotech_assistant_enqueue_scripts() {
     if ($js_files) {
         foreach ($js_files as $js_file) {
             $js_filename = basename($js_file);
-            // Use 'wp-element' (React) or just load our bundled React
-            // Since Vite bundles React, we don't need wp-element dependency usually, unless we externalize it.
-            // Here we assume bundled.
             wp_enqueue_script('momotech-assistant-js-' . $js_filename, $plugin_url . 'dist/assets/' . $js_filename, array(), '1.0.0', true);
         }
     }
