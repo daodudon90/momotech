@@ -12,16 +12,22 @@ declare global {
   }
 }
 
+// Default API Key provided by user (Hardcoded for GitHub deployment)
+const DEFAULT_API_KEY = "AIzaSyDDRhfe8BlZCbZlnAujQUn3T5o-sTWSLoY";
+
 let aiClient: GoogleGenAI | null = null;
 
 // Initialize the client
 const initializeAI = () => {
     if (!aiClient) {
-        // Try to get key from WordPress settings, fallback to env var (dev), or empty
-        const apiKey = window.momotechSettings?.apiKey || import.meta.env.VITE_GEMINI_API_KEY || "";
+        // Priority: 
+        // 1. Key from WordPress Customizer (if set)
+        // 2. Hardcoded Default Key (for GitHub/Auto-deployment)
+        // 3. Env var (dev)
+        const apiKey = window.momotechSettings?.apiKey || DEFAULT_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || "";
         
         if (!apiKey) {
-            console.warn("Momotech AI: No API Key found. Please configure it in WordPress Customizer.");
+            console.warn("Momotech AI: No API Key found.");
             throw new Error("API Key is missing");
         }
         
@@ -71,8 +77,14 @@ export const getChatResponse = async (
         });
 
         return response.text || "Xin lỗi, tôi không thể trả lời lúc này.";
-    } catch (error) {
+    } catch (error: any) {
         console.error("Gemini API Error:", error);
-        return "Vui lòng nhập API Key trong phần Tùy biến giao diện (Customize) để sử dụng tính năng này.";
+        
+        // Check for Quota Exceeded (429) or generic errors
+        if (error.message?.includes('429') || error.status === 429) {
+            return "Hệ thống đang quá tải (đạt giới hạn gói miễn phí). Vui lòng thử lại sau 1 phút.";
+        }
+        
+        return "Vui lòng kiểm tra API Key trong phần Tùy biến giao diện (Customize) hoặc thử lại sau.";
     }
 };
