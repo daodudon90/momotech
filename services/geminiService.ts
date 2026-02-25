@@ -84,7 +84,12 @@ export const getChatResponse = async (
         if (error.message?.includes('429') || error.status === 429) {
             return "Hệ thống đang quá tải (đạt giới hạn gói miễn phí). Vui lòng thử lại sau 1 phút.";
         }
+
+        // Check for Permission Denied / Domain Restriction (403)
+        if (error.message?.includes('403') || error.status === 403) {
+             return "Lỗi quyền truy cập (403). Vui lòng kiểm tra lại cấu hình tên miền (Domain Restrictions) của API Key trên Google Cloud Console. Đảm bảo domain Vercel đã được thêm vào.";
+        }
         
-        return "Vui lòng kiểm tra API Key trong phần Tùy biến giao diện (Customize) hoặc thử lại sau.";
+        return "Đã có lỗi xảy ra. Vui lòng kiểm tra API Key hoặc thử lại sau.";
     }
 };
