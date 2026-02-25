@@ -19,50 +19,67 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   onFilterChange,
   onClear,
 }) => {
-  const [selectedBrand, setSelectedBrand] = useState<string>('Tất cả');
-  const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000]);
   const [isPriceOpen, setIsPriceOpen] = useState(false);
 
-  // Hardcoded lists as per user request, but we can also merge with dynamic ones if needed.
-  // User requested:
-  // Categories: Tất cả, Business, Gaming, Ultrabook, General
-  // Brands: Tất cả, Lenovo, Dell, Apple, Asus, Other
-  
-  const displayCategories = ['Tất cả', 'Business', 'Gaming', 'Ultrabook', 'General'];
-  const displayBrands = ['Tất cả', 'Lenovo', 'Dell', 'Apple', 'Asus', 'Other'];
+  // Hardcoded lists as per user request
+  const displayCategories = ['Business', 'Gaming', 'Ultrabook', 'General'];
+  const displayBrands = ['Lenovo', 'Dell', 'Apple', 'Asus', 'Other'];
 
   useEffect(() => {
-    const newBrands = selectedBrand === 'Tất cả' ? [] : [selectedBrand];
-    // If "Other" is selected, we might need special logic, but for now let's assume 'Other' is a brand name in the data 
-    // OR we filter for brands NOT in the main list. 
-    // For simplicity, let's assume 'Other' is just a value. 
-    // If the user meant "Everything else", that requires more complex logic. 
-    // Given the context, let's treat it as a specific filter value or just a brand named "Other".
-    // However, usually "Other" implies "Not Lenovo, Dell, Apple, Asus".
-    
-    // Let's implement "Other" logic: if selectedBrand is 'Other', filter by brands NOT in [Lenovo, Dell, Apple, Asus].
-    // But the parent component handles the filtering based on the array we pass.
-    // So we'll pass the array of *excluded* brands? No, `onFilterChange` expects `brands` to *include*.
-    
-    // Let's stick to simple string matching first. If the data actually has "Other", it works.
-    // If the user wants "Other" to mean "Rest of brands", we need to pass all other brands.
-    
+    // Brand Filtering Logic
     let brandsToFilter: string[] = [];
-    if (selectedBrand === 'Other') {
-        brandsToFilter = brands.filter(b => !['Lenovo', 'Dell', 'Apple', 'Asus'].includes(b));
-    } else if (selectedBrand !== 'Tất cả') {
-        brandsToFilter = [selectedBrand];
+    if (selectedBrands.length > 0) {
+        const explicitBrands = selectedBrands.filter(b => b !== 'Other');
+        const hasOther = selectedBrands.includes('Other');
+        
+        brandsToFilter = [...explicitBrands];
+        
+        if (hasOther) {
+            // Include brands that are NOT in the main display list
+            const mainBrands = ['Lenovo', 'Dell', 'Apple', 'Asus'];
+            const otherBrands = brands.filter(b => !mainBrands.includes(b));
+            brandsToFilter = [...brandsToFilter, ...otherBrands];
+        }
     }
 
-    const categoriesToFilter = selectedCategory === 'Tất cả' ? [] : [selectedCategory];
+    // Category Filtering Logic
+    // We pass the selected categories directly. 
+    // Note: App.tsx does exact matching. If "Ultrabook" implies "Business" in data, 
+    // we might need mapping, but for now we pass what is selected.
+    const categoriesToFilter = selectedCategories;
 
     onFilterChange({
       brands: brandsToFilter,
       categories: categoriesToFilter,
       priceRange
     });
-  }, [selectedBrand, selectedCategory, priceRange, brands]);
+  }, [selectedBrands, selectedCategories, priceRange, brands]);
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands(prev => {
+      if (prev.includes(brand)) {
+        return prev.filter(b => b !== brand);
+      } else {
+        return [...prev, brand];
+      }
+    });
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
+  };
+
+  const clearAllBrands = () => setSelectedBrands([]);
+  const clearAllCategories = () => setSelectedCategories([]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, index: 0 | 1) => {
     const newRange = [...priceRange] as [number, number];
@@ -78,17 +95,28 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         <div className="flex items-center gap-3 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 no-scrollbar">
           <span className="text-sm font-bold text-gray-700 whitespace-nowrap">Danh mục:</span>
           <div className="flex gap-2">
+            <button
+                onClick={clearAllCategories}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedCategories.length === 0
+                    ? 'bg-indigo-600 text-white shadow-sm' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Tất cả
+            </button>
             {displayCategories.map(cat => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedCategory === cat 
+                onClick={() => toggleCategory(cat)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                  selectedCategories.includes(cat)
                     ? 'bg-indigo-600 text-white shadow-sm' 
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 {cat}
+                {selectedCategories.includes(cat) && <Check className="w-3 h-3" />}
               </button>
             ))}
           </div>
@@ -100,17 +128,28 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         <div className="flex items-center gap-3 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 no-scrollbar">
           <span className="text-sm font-bold text-gray-700 whitespace-nowrap">Thương hiệu:</span>
           <div className="flex gap-2">
+            <button
+                onClick={clearAllBrands}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedBrands.length === 0
+                    ? 'bg-indigo-600 text-white shadow-sm' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Tất cả
+            </button>
             {displayBrands.map(brand => (
               <button
                 key={brand}
-                onClick={() => setSelectedBrand(brand)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedBrand === brand 
+                onClick={() => toggleBrand(brand)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                  selectedBrands.includes(brand)
                     ? 'bg-indigo-600 text-white shadow-sm' 
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 {brand}
+                {selectedBrands.includes(brand) && <Check className="w-3 h-3" />}
               </button>
             ))}
           </div>
