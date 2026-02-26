@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
 import { Product } from '../types';
-import { getChatResponse } from '../services/geminiService';
+import { getChatResponseStream } from '../services/geminiService';
+import ReactMarkdown from 'react-markdown';
 
 interface AIChatBotProps {
   products: Product[];
@@ -10,7 +11,7 @@ interface AIChatBotProps {
 export const AIChatBot: React.FC<AIChatBotProps> = ({ products }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([
-    { role: 'model', text: 'Chào bạn! Mình là AI tư vấn của Momotech. Bạn đang tìm laptop loại nào? (Gaming, Văn phòng, hay Đồ họa?)' }
+    { role: 'model', text: 'Chào bạn! Mình là Trợ lý MomoTech. Mình có thể giúp gì cho bạn về laptop hôm nay?' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,8 +37,6 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ products }) => {
 
     try {
         // Prepare history for API
-        // Filter out the initial greeting message (index 0) if it's from the model
-        // Gemini API expects the conversation to start with a user message
         const history = messages
             .filter((m, index) => !(index === 0 && m.role === 'model'))
             .map(m => ({
@@ -45,12 +44,33 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ products }) => {
                 parts: [{ text: m.text }]
             }));
 
-        const responseText = await getChatResponse(userMsg, products, history);
+        // Add a placeholder message for the model response
+        setMessages(prev => [...prev, { role: 'model', text: '' }]);
+
+        const stream = getChatResponseStream(userMsg, products, history);
         
-        setMessages(prev => [...prev, { role: 'model', text: responseText }]);
+        let fullResponse = "";
+        for await (const chunk of stream) {
+            fullResponse += chunk;
+            setMessages(prev => {
+                const newMessages = [...prev];
+                const lastMessage = newMessages[newMessages.length - 1];
+                if (lastMessage.role === 'model') {
+                    lastMessage.text = fullResponse;
+                }
+                return newMessages;
+            });
+        }
     } catch (err) {
         console.error(err);
-        setMessages(prev => [...prev, { role: 'model', text: "Xin lỗi, mình đang gặp sự cố. Bạn thử lại sau nhé." }]);
+        setMessages(prev => {
+             const newMessages = [...prev];
+             // Remove the empty placeholder if it failed immediately, or append error
+             if (newMessages[newMessages.length - 1].text === "") {
+                 newMessages[newMessages.length - 1].text = "Xin lỗi, mình đang gặp sự cố. Bạn thử lại sau nhé.";
+             }
+             return newMessages;
+        });
     } finally {
         setIsLoading(false);
     }
@@ -78,7 +98,7 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ products }) => {
           <div className="bg-indigo-600 p-4 flex justify-between items-center text-white">
             <div className="flex items-center space-x-2">
               <Bot className="w-6 h-6" />
-              <span className="font-bold">Momotech AI Assistant</span>
+              <span className="font-bold">MomoTech Assistant</span>
             </div>
             <button onClick={() => setIsOpen(false)} className="hover:bg-indigo-700 p-1 rounded transition-colors">
               <X className="w-5 h-5" />
@@ -90,19 +110,23 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ products }) => {
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div 
-                  className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                  className={`max-w-[85%] p-3 rounded-2xl text-sm ${
                     msg.role === 'user' 
                       ? 'bg-indigo-600 text-white rounded-br-none' 
                       : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-sm'
                   }`}
                 >
-                  {msg.text.split('\n').map((line, i) => (
-                      <p key={i} className="mb-1 last:mb-0">{line}</p>
-                  ))}
+                  {msg.role === 'user' ? (
+                      msg.text
+                  ) : (
+                      <div className="markdown-body text-sm">
+                        <ReactMarkdown>{msg.text}</ReactMarkdown>
+                      </div>
+                  )}
                 </div>
               </div>
             ))}
-            {isLoading && (
+            {isLoading && messages[messages.length - 1].role === 'user' && (
               <div className="flex justify-start">
                  <div className="bg-white p-3 rounded-2xl rounded-bl-none border border-gray-200 shadow-sm flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />

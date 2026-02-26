@@ -13,6 +13,7 @@ declare global {
 }
 
 // Default API Key provided by user (Hardcoded for GitHub deployment)
+// Note: In a real production environment, this should be handled more securely.
 const DEFAULT_API_KEY = "AIzaSyDDRhfe8BlZCbZlnAujQUn3T5o-sTWSLoY";
 
 let aiClient: GoogleGenAI | null = null;
@@ -24,7 +25,8 @@ const initializeAI = () => {
         // 1. Key from WordPress Customizer (if set)
         // 2. Hardcoded Default Key (for GitHub/Auto-deployment)
         // 3. Env var (dev)
-        const apiKey = window.momotechSettings?.apiKey || DEFAULT_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || "";
+        // 4. Process env (platform)
+        const apiKey = window.momotechSettings?.apiKey || DEFAULT_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
         
         if (!apiKey) {
             console.warn("Momotech AI: No API Key found.");
@@ -36,11 +38,11 @@ const initializeAI = () => {
     return aiClient;
 };
 
-export const getChatResponse = async (
+export const getChatResponseStream = async function* (
     userMessage: string, 
     products: Product[],
     history: {role: string, parts: {text: string}[]}[]
-): Promise<string> => {
+): AsyncGenerator<string, void, unknown> {
     
     try {
         const client = initializeAI();
@@ -51,22 +53,26 @@ export const getChatResponse = async (
         ).join('\n');
 
         const systemInstruction = `
-        Bạn là một trợ lý ảo chuyên nghiệp của Momotech, một website bán laptop.
-        Nhiệm vụ của bạn là tư vấn cho khách hàng chọn mua laptop phù hợp dựa trên danh sách sản phẩm hiện có của cửa hàng.
+        Vai trò: Bạn là trợ lý AI ảo cốt lõi của ứng dụng MomoTech Smart Hub, hoạt động trên website affiliate momotech.vn.
         
-        Dưới đây là danh sách sản phẩm hiện có:
+        Nhiệm vụ chính: 
+        * Tư vấn chuyên sâu về các dòng laptop (văn phòng, gaming, đồ họa, sinh viên...).
+        * Phân tích, so sánh các thông số kỹ thuật (CPU, RAM, GPU, Màn hình) một cách dễ hiểu để giúp khách hàng đưa ra quyết định.
+        
+        Mục tiêu kinh doanh: Trả lời đúng trọng tâm và khéo léo điều hướng, kích thích khách hàng click vào các liên kết affiliate tham khảo sản phẩm trên momotech.vn.
+        
+        Giọng điệu: Chuyên nghiệp, nhiệt tình, ngắn gọn. Xưng hô là "Trợ lý MomoTech" và "bạn/quý khách".
+        
+        Giới hạn (Guardrails): Chỉ tập trung vào lĩnh vực công nghệ, thiết bị điện tử và laptop. Lịch sự từ chối trả lời các câu hỏi không liên quan đến cấu hình máy tính hoặc dịch vụ của hệ thống.
+
+        Dữ liệu sản phẩm hiện có (Sử dụng thông tin này để tư vấn):
         ${productContext}
         
-        Nguyên tắc trả lời:
-        1. Chỉ tư vấn các sản phẩm có trong danh sách trên.
-        2. Trả lời ngắn gọn, thân thiện, lịch sự (dùng tiếng Việt).
-        3. Nếu khách hỏi về sản phẩm không có, hãy gợi ý sản phẩm tương tự trong danh sách.
-        4. Nhấn mạnh vào lợi ích sử dụng phù hợp với nhu cầu khách (ví dụ: sinh viên, đồ họa, gaming).
-        5. Đừng bịa đặt giá cả.
+        Lưu ý: Nếu khách hỏi về sản phẩm không có trong danh sách, hãy gợi ý sản phẩm tương tự trong danh sách trên. Đừng bịa đặt giá cả.
         `;
 
-        const response = await client.models.generateContent({
-            model: "gemini-3-flash-preview", 
+        const responseStream = await client.models.generateContentStream({
+            model: "gemini-3.1-pro-preview", 
             contents: [
                 ...history.map(h => ({ role: h.role, parts: h.parts })),
                 { role: 'user', parts: [{ text: userMessage }] }
@@ -76,20 +82,12 @@ export const getChatResponse = async (
             }
         });
 
-        return response.text || "Xin lỗi, tôi không thể trả lời lúc này.";
-    } catch (error: any) {
-        console.error("Gemini API Error:", error);
-        
-        // Check for Quota Exceeded (429) or generic errors
-        if (error.message?.includes('429') || error.status === 429) {
-            return "Hệ thống đang quá tải (đạt giới hạn gói miễn phí). Vui lòng thử lại sau 1 phút.";
+        for await (const chunk of responseStream) {
+            yield chunk.text || "";
         }
 
-        // Check for Permission Denied / Domain Restriction (403)
-        if (error.message?.includes('403') || error.status === 403) {
-             return "Lỗi quyền truy cập (403). Vui lòng kiểm tra lại cấu hình tên miền (Domain Restrictions) của API Key trên Google Cloud Console. Đảm bảo domain Vercel đã được thêm vào.";
-        }
-        
-        return "Đã có lỗi xảy ra. Vui lòng kiểm tra API Key hoặc thử lại sau.";
+    } catch (error: any) {
+        console.error("Gemini API Error:", error);
+        yield "Xin lỗi, đã có lỗi xảy ra khi kết nối với AI.";
     }
 };
