@@ -11,7 +11,7 @@ interface AIChatBotProps {
 export const AIChatBot: React.FC<AIChatBotProps> = ({ products }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([
-    { role: 'model', text: 'Chào bạn! Mình là Trợ lý MomoTech. Mình có thể giúp gì cho bạn về laptop hôm nay?' }
+    { role: 'model', text: 'Chào bạn! Mình là Trợ lý MomoTech (Gemini). Mình có thể giúp gì cho bạn về laptop hôm nay?' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +47,7 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ products }) => {
         // Add a placeholder message for the model response
         setMessages(prev => [...prev, { role: 'model', text: '' }]);
 
+        // Use DeepSeek service
         const stream = getChatResponseStream(userMsg, products, history);
         
         let fullResponse = "";
@@ -98,7 +99,7 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ products }) => {
           <div className="bg-indigo-600 p-4 flex justify-between items-center text-white">
             <div className="flex items-center space-x-2">
               <Bot className="w-6 h-6" />
-              <span className="font-bold">MomoTech Assistant</span>
+              <span className="font-bold">MomoTech Assistant (Gemini)</span>
             </div>
             <button onClick={() => setIsOpen(false)} className="hover:bg-indigo-700 p-1 rounded transition-colors">
               <X className="w-5 h-5" />
